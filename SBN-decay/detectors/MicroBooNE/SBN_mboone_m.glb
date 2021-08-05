@@ -1,0 +1,89 @@
+%!GLoBES
+
+$version="3.2.13"
+
+
+nuflux(#MICROplus)<			/* NAME can be replaced, e.g. FLUXplus */
+	@flux_file ="./flux/unitflux.dat"	/* loads the flux file */
+	@time =	6.       		/* sets the runtime in units years */
+  	@power = 2.2                   /* e20 POT per year */
+        @norm = 4.93e-4		       /* sets a normalization factor */
+>
+
+
+$target_mass = 	0.089        	/* kt (fiducial mass) */
+
+
+$sampling_points = 99         /* number of sampling points 
+				   before energy smearing */
+$sampling_min = 0.026             /* GeV */
+$sampling_max = 4.97             /* GeV */
+
+
+$emin = 0.2	        	/* GeV */
+$emax = 3.0	        	/* GeV */
+
+$binsize = {0.1, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.25, 0.25, 0.5, 0.5, 0.5}  /* bins with different sizes */
+
+
+$baseline = 0.47   /* km */
+
+$profiletype = 1. /* constant density */
+
+
+energy(#electron)<	        /* energy resolution for electrons and photons */
+    @type = 1
+    @sigma_function = #standard
+    @sigma_e = {0.0,0.15,0.0} 	
+>
+
+energy(#muon)<			/* energy resolution for muons and pions */
+    @type = 1
+    @sigma_function = #standard
+    @sigma_e = {0.0,0.06,0.0} 	
+>
+
+cross(#CC)<
+	@cross_file = "./xsec/XCC.dat"
+>
+
+cross(#NC)<
+	@cross_file = "./xsec/XNC.dat"
+>
+
+$filter_state = 1 
+$filter_value = 0.07
+
+
+channel(#nu_mu_dis_CC)<
+	@channel = 	#MICROplus:	+:	m:	m:	#CC:    #muon
+        @post_smearing_efficiencies = {0.0629852, 0.0479392, 0.0413781, 0.0376462, 0.0342948, 0.0322838, 0.0296804, 0.0274722, 0.0255483, 0.0240895, 0.022731, 0.0215299, 0.0205758, 0.0195151, 0.0172457, 0.0141664, 0.0133488, 0.0176696, 0.0209086}
+>
+
+channel(#anu_mu_dis_CC)<
+	@channel = 	#MICROplus:	-:	m:	m:	#CC:    #muon
+        @post_smearing_efficiencies = {0.0629852, 0.0479392, 0.0413781, 0.0376462, 0.0342948, 0.0322838, 0.0296804, 0.0274722, 0.0255483, 0.0240895, 0.022731, 0.0215299, 0.0205758, 0.0195151, 0.0172457, 0.0141664, 0.0133488, 0.0176696, 0.0209086}
+>
+
+channel(#nu_mu_dis_NC)<
+	@channel = 	#MICROplus:	+:     NOSC_m:	NOSC_m:	#NC:    #muon
+>
+
+channel(#anu_mu_dis_NC)<
+	@channel = 	#MICROplus:	-:     NOSC_m:	NOSC_m:	#NC:    #muon
+>
+
+
+rule(#Nu_Mu_Disappearance)<
+ 	@signal = 1.0@#nu_mu_dis_CC : 1.0@#anu_mu_dis_CC
+	
+	@background =  0.0@#nu_mu_dis_NC : 0.0@#anu_mu_dis_NC
+
+	@energy_window = 0.2 : 3.0
+
+        @sys_off_function = "chiNoSysSpectrum"
+        @sys_off_errors   = {}
+        @sys_on_function  = "chiZero"
+        @sys_on_errors    = {}
+>
+

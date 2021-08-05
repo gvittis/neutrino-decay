@@ -1,0 +1,88 @@
+%!GLoBES
+
+$version="3.2.13"
+
+nuflux(#ICARUSplus)<			/* NAME can be replaced, e.g. FLUXplus */
+	@flux_file ="./flux/unitflux.dat"	/* loads the flux file */
+	@time =	3.       		/* sets the runtime in units years */
+  	@power = 2.2                   /* e20 POT per year */
+        @norm = 1.61e-3		       /* sets a normalization factor */
+>
+
+$target_mass = 	0.476        	/* kt (fiducial mass) */
+
+
+$sampling_points = 99         /* number of sampling points 
+				   before energy smearing */
+$sampling_min = 0.025             /* GeV */
+$sampling_max = 4.975             /* GeV */
+
+
+$emin = 0.2	        	/* GeV */
+$emax = 3.0	        	/* GeV */
+/*$bins = 30 */
+
+$binsize = {0.1, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.25, 0.25, 0.5, 0.5, 0.5}  /* bins with different sizes */
+
+
+$baseline = 0.6   /* km */
+$profiletype = 1. /* constant density */
+
+
+energy(#electron)<	        /* energy resolution for electrons and photons */
+    @type = 1
+    @sigma_function = #standard
+    @sigma_e = {0.0,0.15,0.0} 	
+>
+
+energy(#muon)<			/* energy resolution for muons and pions */
+    @type = 1
+    @sigma_function = #standard
+    @sigma_e = {0.0,0.06,0.0} 	
+>
+
+$filter_state = 1 
+$filter_value = 0.07
+
+cross(#CC)<
+	@cross_file = "./xsec/XCC.dat"
+>
+
+cross(#NC)<
+	@cross_file = "./xsec/XNC.dat"
+>
+
+
+channel(#nu_mu_dis_CC)<
+	@channel = 	#ICARUSplus:	+:	m:	m:	#CC:    #muon
+        @post_smearing_efficiencies = {0.0485007, 0.0381141, 0.0338888, 0.0302386, 0.0284905, 0.0263415, 0.0242745, 0.0225583, 0.021198, 0.0205525, 0.0188905, 0.0181465, 0.0173998, 0.01646, 0.0145845, 0.012148, 0.0114045, 0.014032, 0.0165676}
+>
+
+channel(#anu_mu_dis_CC)<
+	@channel = 	#ICARUSplus:	-:	m:	m:	#CC:    #muon
+        @post_smearing_efficiencies = {0.0485007, 0.0381141, 0.0338888, 0.0302386, 0.0284905, 0.0263415, 0.0242745, 0.0225583, 0.021198, 0.0205525, 0.0188905, 0.0181465, 0.0173998, 0.01646, 0.0145845, 0.012148, 0.0114045, 0.014032, 0.0165676}
+>
+
+channel(#nu_mu_dis_NC)<
+	@channel = 	#ICARUSplus:	+:    NOSC_m:	NOSC_m:	#NC:    #muon
+>
+
+channel(#anu_mu_dis_NC)<
+	@channel = 	#ICARUSplus:	-:    NOSC_m:	NOSC_m:	#NC:    #muon
+>
+
+
+/* ####### Setting the rules ####### */
+rule(#Nu_Mu_Disappearance)<
+ 	@signal = 1.0@#nu_mu_dis_CC : 1.0@#anu_mu_dis_CC
+	
+	@background =  0.0@#nu_mu_dis_NC : 0.0@#anu_mu_dis_NC
+
+	@energy_window = 0.2 : 3.0
+
+        @sys_off_function = "chiNoSysSpectrum"
+        @sys_off_errors   = {}
+        @sys_on_function  = "chiSBN"
+        @sys_on_errors    = { 0.1, 0.1 }
+>
+

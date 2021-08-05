@@ -1,0 +1,127 @@
+%!GLoBES
+
+$version="3.2.13"
+
+/* I will use this toy model to build LSND detector */
+
+/* ######################## Beam flux ######################################### */
+
+/* Beam data */
+nuflux(#LSND)<
+	@flux_file="./flux/flux2.dat"  /* unitflux.dat" */
+	@time = 1   // 6   /* years */
+	@power = 1 // 3e22     /* POT yrs^-1 */
+	@norm = 0.000192487  /* ask Gabriela */
+>
+
+
+/* ######################## Detector settings ################################# */
+
+/* Here the fiducial mass of the detector can be adjusted 
+   (see page 88 of the GLoBES manual). */
+
+
+$target_mass = 	0.167       	/* kt (fiducial mass) */
+
+
+/* ######################## Energy window ##################################### */
+
+/* Here, the energy window and bin numbers are defined. 
+   The description of how to set the energy window is given 
+   on pages 95-97 in the GLoBES manual. */
+
+
+/* True Energy Level (pre-smearing) */
+
+$sampling_points = 99         /* number of sampling points 
+				   before energy smearing */
+$sampling_min = 11.5             /* MeV, but GLoBES understand as GeV */
+$sampling_max = 200              /* MeV, same */
+
+/* Reconstructed Energy Level (post-smearing) */
+
+$emin = 20	        	/* MeV, but for GLoBES is GeV */
+$emax = 75	        	/* MeV, same */
+$binsize = {1.4,1.7,1.9,2.3,2.7,3.3,4.2,5.3,7.2,10,15}
+
+
+/* ######################## Baseline setting ################################## */
+
+/* In this section, the baseline length of the experiment and
+   the matter density is inserted to the AEDL file. There are 
+   three different profile types possible in GLoBES. Please choose
+   the one that seems to be appropriate for the requirements 
+   of the toy experiment that has to be described. Explanations
+   of the three types and the necesary AEDL syntax are given in 
+   the GLoBES manual on pages 90-91. */ 
+
+$baseline = 30   /* m, but GLoBES reads this as km */
+
+$profiletype=1
+
+/* ######################## Energy resolution ################################# */
+
+/* In this section, the energy resolution of different channels can 
+   be defined. One can either use manually defined migration matrices
+   or use the automatic energy smearing of the energy resolution 
+   functions provided by GLoBES. The implementation of smearing 
+   matrices is described in the GLoBES manual on pages 101-102 and the 
+   usage of the GLoBES internal resolution functions is explained on
+   pages 98-100 */
+
+
+energy(#electron)<	        /* energy resolution for electrons */
+    @type = 1
+    @sigma_function = #standard
+    @sigma_e = {0.17,0,0}	
+>
+
+/* HINT: If one wants to compute the event rates without energy 
+         smearing, one still has to assign a number, so that 
+	 the AEDL file works properly. The value has to be very 
+	 small, so that no actual energy smearing is introduced. */
+
+$filter_state = 1
+$filter_value = 0.0
+
+
+/* ######################## Cross sections #################################### */
+
+/* In this section, the cross section data for different channels is 
+   loaded from external data files. Explanations can be found in the 
+   GLoBES manual on pages 91-92. */
+
+cross(#CC)<
+	@cross_file = "./xsec/xsec.dat"
+>
+
+/* ####### Channel definitions ####### */
+
+/*AntiNUE APP*/
+channel(#nu_e_signal)<
+	@channel = 	#LSND:	-:	m:	e:	#CC:    #electron
+>
+
+/* ####### Setting the rules ####### */
+
+rule(#Nu_E_Appearance)<
+ 	@signal = 0.42@#nu_e_signal
+ //       @signalerror = 0.20 : 0.001
+	
+	@background = 0.0@#nu_e_signal
+  //      @backgrounderror = 0.2 : 0.001  
+   
+        @energy_window = 20 : 60	
+        
+        @sys_off_function = "chiNoSysSpectrum"
+        @sys_off_errors   = {}
+        @sys_on_function  = "chiLSND"//"chiSpectrumTilt"
+        @sys_on_errors    = { 0.1, 0.1}
+                         /* { SigNorm, BGNorm, SpecShift} */
+>
+
+/* ############################################################################
+  *                                                                            *
+  *                               END OF FILE                                  *
+  *				                                               *
+   ############################################################################ */ 

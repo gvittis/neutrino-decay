@@ -1,0 +1,90 @@
+%!GLoBES
+
+$version="3.2.13"
+
+nuflux(#LARplus)<
+	@flux_file ="./flux/unitflux.dat"
+	@time =	3.       		
+  	@power = 2.2                   /* e20 POT per year */
+        @norm = 5.39e-5		       
+>
+
+
+$target_mass = 	0.112        	/* kt (fiducial mass) */
+
+
+$sampling_points = 99         /* number of sampling points 
+				   before energy smearing */
+$sampling_min = 0.025             /* GeV */
+$sampling_max = 4.975             /* GeV */
+
+
+$emin = 0.2	        	/* GeV */
+$emax = 3.0	        	/* GeV */
+
+$binsize = {0.1, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.25, 0.25, 0.5, 0.5, 0.5}  /* bins with different sizes */
+
+
+$baseline = 0.11   /* km */
+$profiletype = 1. /* constant density */
+
+
+energy(#electron)<	        /* energy resolution for electrons and photons */
+    @type = 1
+    @sigma_function = #standard
+    @sigma_e = {0.0,0.15,0.0} 	
+>
+
+energy(#muon)<			/* energy resolution for muons and pions */
+    @type = 1
+    @sigma_function = #standard
+    @sigma_e = {0.0,0.06,0.0} 	
+>
+
+cross(#CC)<
+	@cross_file = "./xsec/XCC.dat"
+>
+
+cross(#NC)<
+	@cross_file = "./xsec/XNC.dat"
+>
+
+$filter_state = 1
+$filter_value = 0.0
+
+
+channel(#nu_mu_dis_CC)<
+	@channel = 	#LARplus:	+:	m:	m:	#CC:    #muon
+        @post_smearing_efficiencies = {0.168684, 0.134205, 0.116093, 0.103341, 0.0916223, 0.0831809, 0.0771912, 0.068994, 0.0636922, 0.0574041, 0.0530515, 0.0496703, 0.0453315, 0.0425757, 0.0379051, 0.0319058, 0.028431, 0.029067, 0.0262853}
+>
+
+channel(#anu_mu_dis_CC)<
+	@channel = 	#LARplus:	-:	m:	m:	#CC:    #muon
+        @post_smearing_efficiencies = {0.168684, 0.134205, 0.116093, 0.103341, 0.0916223, 0.0831809, 0.0771912, 0.068994, 0.0636922, 0.0574041, 0.0530515, 0.0496703, 0.0453315, 0.0425757, 0.0379051, 0.0319058, 0.028431, 0.029067, 0.0262853}
+>
+
+channel(#nu_mu_dis_NC)<
+	@channel = 	#LARplus:	+:     NOSC_m:	NOSC_m:	#NC:    #muon
+>
+
+channel(#anu_mu_dis_NC)<
+	@channel = 	#LARplus:	-:    NOSC_m:	NOSC_m:	#NC:    #muon
+>
+
+
+/* ####### Setting the rules ####### */
+rule(#Nu_Mu_Disappearance)<
+ 	@signal = 1.0@#nu_mu_dis_CC : 1.0@#anu_mu_dis_CC
+	
+	@background =  0.0@#nu_mu_dis_NC : 0.0@#anu_mu_dis_NC
+
+	@energy_window = 0.2 : 3.0
+
+        @sys_off_function = "chiNoSysSpectrum"
+        @sys_off_errors   = {}
+        @sys_on_function  = "chiZero"
+        @sys_on_errors    = {}
+                         
+>
+
+

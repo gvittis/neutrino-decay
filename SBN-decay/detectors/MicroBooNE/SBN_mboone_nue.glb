@@ -1,0 +1,84 @@
+%!GLoBES
+
+$version="3.2.13"
+
+nuflux(#MICROplus)<			/* NAME can be replaced, e.g. FLUXplus */
+	@flux_file ="./flux/unitflux.dat"	/* loads the flux file */
+	@time =	6.       		/* sets the runtime in units years */
+  	@power = 2.2                   /* e20 POT per year */
+        @norm = 4.93e-4		       /* sets a normalization factor */
+>
+
+
+$target_mass = 	0.089        	/* kt (fiducial mass) */
+
+
+$sampling_points = 99         /* number of sampling points 
+				   before energy smearing */
+$sampling_min = 0.026             /* GeV */
+$sampling_max = 4.97             /* GeV */
+
+
+$emin = 0.2	        	/* GeV */
+$emax = 3.0	        	/* GeV */
+/*$bins = 30 */
+
+$binsize = {0.15 , 0.15 , 0.15 , 0.15 , 0.15 , 0.15 , 0.20 , 0.20 , 0.25 , 0.25, 1.0 } /* bins with different sizes */
+
+
+$baseline = 0.47   /* km */
+$profiletype = 1.
+
+
+energy(#electron)<	        /* energy resolution for electrons and photons */
+    @type = 1
+    @sigma_function = #standard
+    @sigma_e = {0.0,0.15,0.0} 	
+>
+
+energy(#muon)<			/* energy resolution for muons and pions */
+    @type = 1
+    @sigma_function = #standard
+    @sigma_e = {0.0,0.06,0.0} 	
+>
+
+/* HINT: If one wants to compute the event rates without energy 
+         smearing, one still has to assign a number, so that 
+	 the AEDL file works properly. The value has to be very 
+	 small, so that no actual energy smearing is introduced. */
+
+$filter_state = 1
+$filter_value = 0.0
+
+cross(#CC)<
+	@cross_file = "./xsec/XCC.dat"
+>
+
+cross(#NC)<
+	@cross_file = "./xsec/XNC.dat"
+>
+
+/* ####### Channel definitions ####### */
+/*NUE APP */
+channel(#nu_e_signal)<
+	@channel = 	#MICROplus:	+:	m:	e:	#CC:    #electron
+  //    @post_smearing_efficiencies = {0.0176317, 0.0204941, 0.0177459, 0.0160216, 0.0137517, 0.0120872, 0.0110718, 0.00942904, 0.0143968, 0.02458, 0.}
+>
+
+channel(#anu_e_signal)<
+	@channel = 	#MICROplus:	-:	m:	e:	#CC:    #electron
+   //     @post_smearing_efficiencies = {0.0176317, 0.0204941, 0.0177459, 0.0160216, 0.0137517, 0.0120872, 0.0110718, 0.00942904, 0.0143968, 0.02458, 0.}
+>
+
+rule(#Nu_E_Appearance)<
+ 	@signal = 0.0159@#nu_e_signal : 0.0159@#anu_e_signal
+	
+	@background = 0.0@#nu_e_signal : 0.0@#anu_e_signal
+        @energy_window = 0.2 : 3.0	
+        
+        @sys_off_function = "chiNoSysSpectrum"
+        @sys_off_errors   = {}
+        @sys_on_function  = "chiZero"
+        @sys_on_errors    = {}
+>
+

@@ -1,0 +1,85 @@
+%!GLoBES
+$version="3.2.17"
+
+nuflux(#MBplus)<
+	@flux_file = "./flux/MINIBOONEplus.dat"               //unitflux.dat"    //MINIBOONEplus.dat"
+	@time = 1.0
+	@norm = 8.82588e15
+>
+
+$profiletype = 3
+$densitytab = {1e-5}
+$lengthtab = {0.541}
+
+
+$target_mass = 1.0
+
+
+$emin =         0.0
+$emax =         1.9
+$binsize = {0.5, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2}
+
+
+
+$sampling_points = 200
+$sampling_min = 0.025
+$sampling_max = 9.975
+
+
+$filter_state = 0
+$filter_value = 0.5
+
+
+energy(#ERES_mu)<
+	@type = 1
+	@sigma_e = {0.11,0.0,0.0}
+>
+
+/*energy(#ERES_e)<
+	@type = 1
+          @sigma_function = #standard
+	@sigma_e = {0.15,0.0,0.0}
+>*/
+
+cross(#CC) < @cross_file = "./xsec/XCC.dat" >
+cross(#NC) < @cross_file = "./xsec/XNC.dat" >
+cross(#QE) < @cross_file = "./xsec/XQE.dat" >
+
+/* miniboone data taken from https://www-boone.fnal.gov/for_physicists/data_release/nue2018/ */
+
+/* for bin-dependent MiniBooNE efficiencies, see https://www-boone.fnal.gov/for_physicists/data_release/nue_nuebar_2012/efficiency/MB_nu_nubar_combined_release.html */
+
+
+%eff = {0.94451, 0.766363, 0.884138, 1.06835, 1.26016, 1.49194, 1.76851, 2.03344}
+
+
+/* note that the binning is different for muon events and
+before doing any muon neutrino analysis, the right energy
+bins should be chosen */
+
+
+channel(#numu) < @channel =   #MBplus:	  +:	 m:	 m:	#QE:	 #ERES_mu
+      //         @post_smearing_efficiencies:=%eff 
+>
+
+channel(#anumu) < @channel =   #MBplus:	  -:	 m:	 m:	#QE:	 #ERES_mu
+      // @post_smearing_efficiencies:=%eff 
+>
+ 
+
+rule(#numu_dis)< @signal = 1.0@#numu : 1.0@#anumu
+                @background = 0.0@#numu : 0.0@#anumu
+                @sys_on_function = "chiMB_nue"
+	        @sys_on_errors   = {}
+                @sys_off_function = "chiNoSysSpectrum"
+                @energy_window = 0.0 : 1.9 
+>
+
+
+/*
+Systematic uncertainties: Signal: read from Fig. 41 of 0806.1449.
+Background: Read from Fig. 1 of 1805.12028. The first two numbers
+in @sys_on_errors are the energy calibration errors while the rest
+are the bin-dependent systematic errors (11 signal systematics,
+followed by 11 background systematics)
+*/
